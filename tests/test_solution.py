@@ -64,3 +64,41 @@ def test_lunch_break_blocks_all_slots_during_lunch():
     assert "12:45" not in slots
 
 """TODO: Add at least 5 additional test cases to test your implementation."""
+def test_meeting_fits_exactly_at_end_of_day():
+    """Should allow a meeting that ends exactly at 17:00."""
+    events = []
+    slots = suggest_slots(events, meeting_duration=60, day="2026-02-01")
+    assert "16:00" in slots
+    assert "16:15" not in slots  # Would end at 17:15
+
+def test_meeting_too_long_for_any_slot():
+    """Should return an empty list if duration is longer than any available gap."""
+    # Longest gap is 09:00-12:00 (180 mins) or 13:00-17:00 (240 mins)
+    events = []
+    slots = suggest_slots(events, meeting_duration=300, day="2026-02-01")
+    assert slots == []
+
+def test_event_overlaps_lunch_break():
+    """Events overlapping lunch should still block the time outside of lunch."""
+    # Event from 11:30 to 13:30. Lunch is already blocked.
+    events = [{"start": "11:30", "end": "13:30"}]
+    slots = suggest_slots(events, meeting_duration=30, day="2026-02-01")
+    assert "11:15" not in slots # Ends at 11:45 (overlap)
+    assert "11:00" in slots     # Ends at 11:30 (no overlap)
+    assert "13:30" in slots
+
+def test_back_to_back_meetings_possible():
+    """A new meeting should be able to start exactly when another ends."""
+    events = [{"start": "09:00", "end": "10:00"}]
+    slots = suggest_slots(events, meeting_duration=60, day="2026-02-01")
+    assert "10:00" in slots
+
+def test_no_events_all_day():
+    """If no events, all 15-min increments outside lunch should be present."""
+    slots = suggest_slots([], 30, "2026-02-01")
+    # 09:00 to 11:30 (last start for 30min meeting before lunch)
+    assert "09:00" in slots
+    assert "11:30" in slots
+    # 13:00 to 16:30 (last start for 30min meeting before EOD)
+    assert "13:00" in slots
+    assert "16:30" in slots
