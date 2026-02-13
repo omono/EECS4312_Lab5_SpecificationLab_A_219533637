@@ -102,3 +102,22 @@ def test_no_events_all_day():
     # 13:00 to 16:30 (last start for 30min meeting before EOD)
     assert "13:00" in slots
     assert "16:30" in slots
+def test_friday_cutoff_blocks_late_slots():
+    """Requirement: Friday meetings must not start after 15:00."""
+    # Feb 6, 2026 is a Friday
+    events = []
+    slots = suggest_slots(events, meeting_duration=30, day="2026-02-06")
+    
+    assert "15:00" in slots      # Should be allowed (starts AT 15:00)
+    assert "15:15" not in slots  # Should be blocked
+    assert "16:00" not in slots  # Should be blocked
+
+def test_non_friday_allows_late_slots():
+    """Monday should still allow slots after 15:00."""
+    # Feb 2, 2026 is a Monday
+    events = []
+    slots = suggest_slots(events, meeting_duration=30, day="2026-02-02")
+    
+    assert "15:15" in slots
+    assert "16:00" in slots
+    assert "16:30" in slots      # Ends at 17:00
