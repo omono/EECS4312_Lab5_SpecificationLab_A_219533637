@@ -112,3 +112,7 @@ def suggest_slots(events, meeting_duration, day):
         curr += 15
         
     return valid_slots
+
+
+
+Lab 6 has not used LLM
